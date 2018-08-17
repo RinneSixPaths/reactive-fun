@@ -2,7 +2,7 @@
     * @param {Object | null | undefined} initialState.
     * @param {Function[]} reducers.
 */
-function createStore(/*initialState = {},*/ reducer) {
+function createStore(reducer) {
     const store = {
         state: {},
         subscribers: [],
