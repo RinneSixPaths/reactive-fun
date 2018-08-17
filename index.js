@@ -2,17 +2,17 @@
     * @param {Object | null | undefined} initialState.
     * @param {Function[]} reducers.
 */
-function createStore(initialState = {}, reducers) {
+function createStore(reducer) {
     const store = {
-        state: initialState,
+        state: {},
         subscribers: [],
         dispatch,
-        reducers,
+        reducer,
         subscribe: function(callback) {
             this.subscribers.push(callback);
         },
         getState: function () {
-            return this.state || initialState;
+            return this.state || reducer();
         },
     }
 
@@ -30,41 +30,71 @@ function createStore(initialState = {}, reducers) {
 }
 
 /*
-    * @param {Object} action.
+    * @param {Object} action to dispatch.
 */
 
 function dispatch(action) {
-    this.reducers.forEach(reducer => {
-        this.state = reducer(this.state, action);
-    });
+    this.state = this.reducer(this.state, action);
 }
 
-const INITIAL_STATE = {
-    deeds: [
-        {
-            description: 'Throw out the trash',
-        },
-        {
-            description: 'Clear kitchen',
-        },
-        {
-            description: 'Pay some gold',
-        },
-    ],
-};
+/*
+    * @param {Object} scheme to slice state between reducers .
+*/
+
+function combineReducers(scheme) {
+    return function(state = {}, action = {}) {
+        for (let key in scheme) {
+            if (state.hasOwnProperty(key)) {
+                state[key] = scheme[key](state[key], action);
+            } else {
+                state[key] = scheme[key](undefined, action);
+            }
+        }
+        return state;
+    };
+}
+
+const INITIAL_DEEDS_STATE = [
+    {
+        description: 'Throw out the trash',
+    },
+    {
+        description: 'Clear kitchen',
+    },
+    {
+        description: 'Pay some gold',
+    },
+];
+
+const INITIAL_ANIMALS_STATE = [
+    {
+        animal: 'Chiken',
+    },
+    {
+        animal: 'Goat',
+    },
+    {
+        animal: 'Pig',
+    },
+];
 
 const addDeedAction = payload => ({
     type: 'ADD_DEED',
     payload
 });
 
-function microReducerForDeeds(state = INITIAL_STATE, action) {
+const addAnimalAction = payload => ({
+    type: 'ADD_ANIMAL',
+    payload
+});
+
+function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
     switch (action.type) {
         case 'ADD_DEED': {
-            return {
+            return [
                 ...state,
-                deeds: [...state.deeds, action.payload],
-            };
+                action.payload,
+            ];
         }
         default: {
             return state;
@@ -72,10 +102,31 @@ function microReducerForDeeds(state = INITIAL_STATE, action) {
     }
 }
 
-const myStore = createStore(INITIAL_STATE, [microReducerForDeeds]);
-const newDiv = document.createElement("div");
+function microReducerForAnimals(state = INITIAL_ANIMALS_STATE, action) {
+    switch (action.type) {
+        case 'ADD_ANIMAL': {
+            return [
+                ...state,
+                action.payload,
+            ];
+        }
+        default: {
+            return state;
+        }
+    }
+}
+
+const rootReducer = combineReducers({
+    deeds: microReducerForDeeds,
+    animals: microReducerForAnimals,
+});
+const myStore = createStore(rootReducer);
+
+const deedDiv = document.createElement("div");
+const animalDiv = document.createElement("div");
 my_div = document.getElementById("root");
-document.body.insertBefore(newDiv, my_div);
+document.body.insertBefore(deedDiv, my_div);
+document.body.insertBefore(animalDiv, my_div);
 
 myStore.subscribe(renderDeeds);
 
@@ -85,10 +136,19 @@ myStore.subscribe(function() {
 
 function renderDeeds({ deeds }) {
     const content = deeds.map(({ description }) => `<h3>${description}</h3>`);
-    newDiv.innerHTML = content.join('');
+    deedDiv.innerHTML = content.join('');
 }
 
 renderDeeds(myStore.getState());
+
+function renderAnimals({ animals }) {
+    const content = animals.map(({ animal }) => `<h4>${animal}</h4>`);
+    animalDiv.innerHTML = content.join('');
+}
+
+renderAnimals(myStore.getState());
+
+myStore.subscribe(renderAnimals);
 
 setTimeout(() => {
     const newDeed = {
@@ -96,3 +156,11 @@ setTimeout(() => {
     };
     myStore.dispatch(addDeedAction(newDeed));
 }, 2000);
+
+setTimeout(() => {
+    const newAnimal = {
+        animal: 'Cat',
+    };
+    myStore.dispatch(addAnimalAction(newAnimal));
+}, 3000);
+
