@@ -2,12 +2,12 @@
     * @param {Object | null | undefined} initialState.
     * @param {Function[]} reducers.
 */
-function createStore(initialState = {}, reducers) {
+function createStore(initialState = {}, reducer) {
     const store = {
         state: initialState,
         subscribers: [],
         dispatch,
-        reducers,
+        reducer,
         subscribe: function(callback) {
             this.subscribers.push(callback);
         },
@@ -30,41 +30,55 @@ function createStore(initialState = {}, reducers) {
 }
 
 /*
-    * @param {Object} action.
+    * @param {Object} action to dispatch.
 */
 
 function dispatch(action) {
-    this.reducers.forEach(reducer => {
-        this.state = reducer(this.state, action);
-    });
+    this.state = this.reducer(this.state, action);
 }
 
+/*
+    * @param {Object} scheme to slice state between reducers .
+*/
+
+function combineReducers(scheme) {
+    return function(state = {}, action) {
+        for (let key in scheme) {
+            state[key] = scheme[key](state[key], action);
+        }
+        return state;
+    };
+}
+
+const INITIAL_DEEDS_STATE = [
+    {
+        description: 'Throw out the trash',
+    },
+    {
+        description: 'Clear kitchen',
+    },
+    {
+        description: 'Pay some gold',
+    },
+];
+
 const INITIAL_STATE = {
-    deeds: [
-        {
-            description: 'Throw out the trash',
-        },
-        {
-            description: 'Clear kitchen',
-        },
-        {
-            description: 'Pay some gold',
-        },
-    ],
-};
+    deeds: INITIAL_DEEDS_STATE,
+}
 
 const addDeedAction = payload => ({
     type: 'ADD_DEED',
     payload
 });
 
-function microReducerForDeeds(state = INITIAL_STATE, action) {
+function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
+    console.log(state);
     switch (action.type) {
         case 'ADD_DEED': {
-            return {
+            return [
                 ...state,
-                deeds: [...state.deeds, action.payload],
-            };
+                action.payload,
+            ];
         }
         default: {
             return state;
@@ -72,7 +86,11 @@ function microReducerForDeeds(state = INITIAL_STATE, action) {
     }
 }
 
-const myStore = createStore(INITIAL_STATE, [microReducerForDeeds]);
+const rootReducer = combineReducers({
+    deeds: microReducerForDeeds,
+});
+const myStore = createStore(INITIAL_STATE, rootReducer);
+
 const newDiv = document.createElement("div");
 my_div = document.getElementById("root");
 document.body.insertBefore(newDiv, my_div);
