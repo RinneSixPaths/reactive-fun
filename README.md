@@ -16,6 +16,7 @@ const INITIAL_DEEDS_STATE = [
 ];
 
 //Use this reducer for createStore()
+
 function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
     switch (action.type) {
         case 'ADD_DEED': {
@@ -35,6 +36,7 @@ or
 
 ```
 //Use this reducer for createStore()
+
 const rootReducer = combineReducers({
     deeds: microReducerForDeeds,
 });
@@ -48,4 +50,18 @@ const myStore = createStore(rootReducer);
 myStore.subscribe(function(stateData) {
     console.log(stateData);
 });
+```
+
+Dispatch an action
+
+```
+const addDeedAction = payload => ({
+    type: 'ADD_DEED',
+    payload
+});
+
+const newTodo = {
+    description: 'Test Some',
+};
+myStore.dispatch(addDeedAction(newTodo));
 ```
