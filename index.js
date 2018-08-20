@@ -2,9 +2,8 @@
     * @param {Object | null | undefined} initialState.
     * @param {Function[]} reducers.
 */
-function createStore(reducer) {
+function createStore(reducer = () => ({})) {
     const store = {
-        state: {},
         subscribers: [],
         dispatch,
         reducer,
@@ -23,7 +22,7 @@ function createStore(reducer) {
         set: function(newState) {
             this._state = newState;
             this.subscribers.forEach(callback => callback(this._state));
-        }
+        },
     });
 
     return store;
