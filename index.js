@@ -2,11 +2,9 @@
     * @param {Object | null | undefined} initialState.
     * @param {Function[]} reducers.
 */
-function createStore(reducer) {
+function createStore(reducer = () => ({}), middleware = () => null) {
     const store = {
-        state: {},
         subscribers: [],
-        dispatch,
         reducer,
         subscribe: function(callback) {
             this.subscribers.push(callback);
@@ -23,14 +21,18 @@ function createStore(reducer) {
         set: function(newState) {
             this._state = newState;
             this.subscribers.forEach(callback => callback(this._state));
-        }
+        },
+    });
+
+    Object.defineProperty(store, 'dispatch', {
+        value: middleware(store) || dispatch,
     });
 
     return store;
 }
 
 /*
-    * @param {Object} action to dispatch.
+    * @param {Object} action to dispatch. Will mutate a state.
 */
 
 function dispatch(action) {
@@ -38,7 +40,7 @@ function dispatch(action) {
 }
 
 /*
-    * @param {Object} scheme to slice state between reducers .
+    * @param {Object} scheme to slice state between reducers.
 */
 
 function combineReducers(scheme) {
@@ -53,6 +55,44 @@ function combineReducers(scheme) {
         return state;
     };
 }
+
+/*
+    * @param {Function[]} middlewares to create chain of functions.
+*/
+
+function applyMiddleware(...middlewares) {
+    return function(store) {
+        return middlewares.reduceRight((prev, current) => (
+            current(store).bind(store, prev)()
+        ), dispatch.bind(store));
+    }
+}
+
+/*
+    Sync logger
+*/
+
+function firstSyncLogger() {
+    return next => action => {
+        console.log('First sync logger. Action:', action);
+        next(action);
+    }
+}
+
+/*
+    Async logger
+*/
+
+function secondAsyncLogger() {
+    return next => action => {
+        console.log('Second async logger. Action:', action);
+        setTimeout(() => next(action), 2000);
+    }
+}
+
+/*
+    Initial state pieces
+*/
 
 const INITIAL_DEEDS_STATE = [
     {
@@ -78,6 +118,10 @@ const INITIAL_ANIMALS_STATE = [
     },
 ];
 
+/*
+    Actions
+*/
+
 const addDeedAction = payload => ({
     type: 'ADD_DEED',
     payload
@@ -87,6 +131,10 @@ const addAnimalAction = payload => ({
     type: 'ADD_ANIMAL',
     payload
 });
+
+/*
+    Deeds reducer
+*/
 
 function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
     switch (action.type) {
@@ -102,6 +150,10 @@ function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
     }
 }
 
+/*
+    Animal reducer
+*/
+
 function microReducerForAnimals(state = INITIAL_ANIMALS_STATE, action) {
     switch (action.type) {
         case 'ADD_ANIMAL': {
@@ -116,17 +168,37 @@ function microReducerForAnimals(state = INITIAL_ANIMALS_STATE, action) {
     }
 }
 
+/*
+    Root reducer creation
+*/
+
 const rootReducer = combineReducers({
     deeds: microReducerForDeeds,
     animals: microReducerForAnimals,
 });
-const myStore = createStore(rootReducer);
 
+/*
+    Store creation
+*/
+
+const myStore = createStore(
+    rootReducer,
+    applyMiddleware(firstSyncLogger, secondAsyncLogger),
+);
+
+/*
+    Section to test our store
+*/
 const deedDiv = document.createElement("div");
 const animalDiv = document.createElement("div");
 my_div = document.getElementById("root");
 document.body.insertBefore(deedDiv, my_div);
 document.body.insertBefore(animalDiv, my_div);
+
+/*
+    Subscribe to store with a callback.
+    Callback will recieve the state.
+*/
 
 myStore.subscribe(renderDeeds);
 
@@ -150,17 +222,18 @@ renderAnimals(myStore.getState());
 
 myStore.subscribe(renderAnimals);
 
-setTimeout(() => {
-    const newDeed = {
-        description: 'Test Some',
-    };
-    myStore.dispatch(addDeedAction(newDeed));
-}, 2000);
+const newDeed = {
+    description: 'Test Some',
+};
+const newAnimal = {
+    animal: 'Cat',
+};
+myStore.dispatch(addDeedAction(newDeed));
+myStore.dispatch(addAnimalAction(newAnimal));
 
 setTimeout(() => {
-    const newAnimal = {
-        animal: 'Cat',
+    const delayedDeed = {
+        description: 'Delayed deed',
     };
-    myStore.dispatch(addAnimalAction(newAnimal));
-}, 3000);
-
+    myStore.dispatch(addDeedAction(delayedDeed));
+}, 1000);
