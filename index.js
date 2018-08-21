@@ -2,9 +2,10 @@
     * @param {Object | null | undefined} initialState.
     * @param {Function[]} reducers.
 */
-function createStore(reducer = () => ({})) {
+function createStore(reducer = () => ({}), middleware = () => null) {
     const store = {
         subscribers: [],
+        //middleware: middleware(),
         dispatch,
         reducer,
         subscribe: function(callback) {
@@ -23,6 +24,10 @@ function createStore(reducer = () => ({})) {
             this._state = newState;
             this.subscribers.forEach(callback => callback(this._state));
         },
+    });
+
+    Object.defineProperty(store, 'middleware', {
+        value: middleware(store),
     });
 
     return store;
@@ -51,6 +56,30 @@ function combineReducers(scheme) {
         }
         return state;
     };
+}
+
+//Compose with state
+
+function applyMiddleware(...middlewares) {
+    return function(store/*, ...middlewares*/) {
+        return middlewares.reduceRight((prev, current) => (
+            current(store).bind(null, prev)()
+        ), store.dispatch);
+    }
+}
+
+function firstLogger() {
+    return next => action => {
+        console.log('First log. Action:', action);
+        return next(action);
+    }
+}
+
+function secondLogger() {
+    return next => action => {
+        console.log('Second log. Action:', action);
+        return next(action);
+    }
 }
 
 const INITIAL_DEEDS_STATE = [
@@ -119,8 +148,16 @@ const rootReducer = combineReducers({
     deeds: microReducerForDeeds,
     animals: microReducerForAnimals,
 });
-const myStore = createStore(rootReducer);
+const myStore = createStore(
+    rootReducer,
+    applyMiddleware(firstLogger, secondLogger),
+);
 
+//var test = applyMiddleware(firstLogger, secondLogger);
+
+/*
+    Tewsting our store section
+*/
 const deedDiv = document.createElement("div");
 const animalDiv = document.createElement("div");
 my_div = document.getElementById("root");
@@ -149,7 +186,7 @@ renderAnimals(myStore.getState());
 
 myStore.subscribe(renderAnimals);
 
-setTimeout(() => {
+/*setTimeout(() => {
     const newDeed = {
         description: 'Test Some',
     };
@@ -161,5 +198,5 @@ setTimeout(() => {
         animal: 'Cat',
     };
     myStore.dispatch(addAnimalAction(newAnimal));
-}, 3000);
+}, 3000);*/
 
