@@ -72,21 +72,21 @@ function applyMiddleware(...middlewares) {
     Sync logger
 */
 
-function firstLogger() {
+function firstSyncLogger() {
     return next => action => {
-        console.log('First logger. Action:', action);
-        return next(action);
+        console.log('First sync logger. Action:', action);
+        next(action);
     }
 }
 
 /*
-    Sync logger
+    Async logger
 */
 
-function secondLogger() {
+function secondAsyncLogger() {
     return next => action => {
-        console.log('Second logger. Action:', action);
-        return next(action);
+        console.log('Second async logger. Action:', action);
+        setTimeout(() => next(action), 2000);
     }
 }
 
@@ -183,7 +183,7 @@ const rootReducer = combineReducers({
 
 const myStore = createStore(
     rootReducer,
-    applyMiddleware(firstLogger, secondLogger),
+    applyMiddleware(firstSyncLogger, secondAsyncLogger),
 );
 
 /*
@@ -222,17 +222,18 @@ renderAnimals(myStore.getState());
 
 myStore.subscribe(renderAnimals);
 
-setTimeout(() => {
-    const newDeed = {
-        description: 'Test Some',
-    };
-    myStore.dispatch(addDeedAction(newDeed));
-}, 2000);
+const newDeed = {
+    description: 'Test Some',
+};
+const newAnimal = {
+    animal: 'Cat',
+};
+myStore.dispatch(addDeedAction(newDeed));
+myStore.dispatch(addAnimalAction(newAnimal));
 
 setTimeout(() => {
-    const newAnimal = {
-        animal: 'Cat',
+    const delayedDeed = {
+        description: 'Delayed deed',
     };
-    myStore.dispatch(addAnimalAction(newAnimal));
-}, 3000);
-
+    myStore.dispatch(addDeedAction(delayedDeed));
+}, 1000);
