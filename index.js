@@ -62,8 +62,8 @@ function combineReducers(scheme) {
 
 function applyMiddleware(...middlewares) {
     return function(store) {
-        return middlewares.reduceRight((prev, current) => (
-            current(store).bind(store, prev)()
+        return middlewares.reduceRight((prevMiddleware, currentMiddleware) => (
+            currentMiddleware(store).bind(null, prevMiddleware)()
         ), dispatch.bind(store));
     }
 }
@@ -72,8 +72,9 @@ function applyMiddleware(...middlewares) {
     Sync logger
 */
 
-function firstSyncLogger() {
+function firstSyncLogger({ getState }) {
     return next => action => {
+        console.log('Current state is', getState());
         console.log('First sync logger. Action:', action);
         next(action);
     }
@@ -83,10 +84,12 @@ function firstSyncLogger() {
     Async logger
 */
 
-function secondAsyncLogger() {
+function secondAsyncLogger(_store) {
     return next => action => {
-        console.log('Second async logger. Action:', action);
-        setTimeout(() => next(action), 2000);
+        setTimeout(() => {
+            console.log('Second async logger. Action:', action);
+            next(action);
+        }, 2000);
     }
 }
 
