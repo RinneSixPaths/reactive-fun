@@ -65,3 +65,51 @@ const newTodo = {
 };
 myStore.dispatch(addDeedAction(newTodo));
 ```
+
+Pass initial state into createStore(). Will ignore reducer's initial state
+
+```
+function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
+    switch (action.type) {
+        case 'ADD_DEED': {
+            return [
+                ...state,
+                action.payload,
+            ];
+        }
+        default: {
+            return state;
+        }
+    }
+}
+
+const INITIAL_STATE = {
+    deeds: {
+        description: 'Todo from initial state',
+    },
+}
+
+const myStore = createStore(
+    microReducerForDeeds,
+    INITIAL_STATE,
+    applyMiddleware(logger),
+);
+```
+
+Apply middleware
+
+```
+function logger({ getState }) {
+    return next => action => {
+        console.log('Current state is', getState());
+        console.log('First sync logger. Action:', action);
+        next(action);
+    }
+}
+
+const myStore = createStore(
+    rootReducer,
+    null,
+    applyMiddleware(logger),
+);
+```
