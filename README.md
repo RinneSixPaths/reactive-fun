@@ -17,7 +17,7 @@ const INITIAL_DEEDS_STATE = [
 
 //Use this reducer for createStore()
 
-function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
+function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action = {}) {
     switch (action.type) {
         case 'ADD_DEED': {
             return [
@@ -69,13 +69,15 @@ myStore.dispatch(addDeedAction(newTodo));
 Pass initial state into createStore(). Will ignore reducer's initial state
 
 ```
-function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
+function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action = {}) {
     switch (action.type) {
         case 'ADD_DEED': {
-            return [
-                ...state,
-                action.payload,
-            ];
+            return {
+                deeds: [
+                    ...state,
+                    action.payload,
+                ],   
+            };
         }
         default: {
             return state;
@@ -84,9 +86,11 @@ function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
 }
 
 const INITIAL_STATE = {
-    deeds: {
-        description: 'Todo from initial state',
-    },
+    deeds: [
+        {
+            description: 'Todo from initial state',
+        },
+    ],
 }
 
 const myStore = createStore(
