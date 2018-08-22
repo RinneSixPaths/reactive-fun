@@ -47,8 +47,8 @@ Store creation and subscription
 ```
 const myStore = createStore(rootReducer);
 
-myStore.subscribe(function(stateData) {
-    console.log(stateData);
+myStore.subscribe(function({ deeds }) {
+    console.log(deeds);
 });
 ```
 
