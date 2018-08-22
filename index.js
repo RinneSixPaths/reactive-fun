@@ -148,7 +148,7 @@ const addAnimalAction = payload => ({
     Deeds reducer
 */
 
-function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
+function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action = {}) {
     switch (action.type) {
         case 'ADD_DEED': {
             return [
@@ -166,7 +166,7 @@ function microReducerForDeeds(state = INITIAL_DEEDS_STATE, action) {
     Animal reducer
 */
 
-function microReducerForAnimals(state = INITIAL_ANIMALS_STATE, action) {
+function microReducerForAnimals(state = INITIAL_ANIMALS_STATE, action = {}) {
     switch (action.type) {
         case 'ADD_ANIMAL': {
             return [
