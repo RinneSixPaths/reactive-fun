@@ -1,8 +1,13 @@
 /*
     * @param {Function} reducer.
+    * @param {Object} initial state.
     * @param {Function} middleware (chain of custom middlewares).
 */
-function createStore(reducer = () => ({}), middleware = () => null) {
+function createStore(
+    reducer = () => ({}),
+    initialState = null,
+    middleware = () => null
+) {
     const store = {
         subscribers: [],
         reducer,
@@ -10,7 +15,10 @@ function createStore(reducer = () => ({}), middleware = () => null) {
             this.subscribers.push(callback);
         },
         getState: function () {
-            return this.state || reducer();
+            if (!this.state) {
+                this.state = reducer(initialState);
+            }
+            return this.state;
         },
     }
 
@@ -44,7 +52,8 @@ function dispatch(action) {
 */
 
 function combineReducers(scheme) {
-    return function(state = {}, action = {}) {
+    return function(currentState, action = {}) {
+        const state = currentState || {};
         for (let key in scheme) {
             if (state.hasOwnProperty(key)) {
                 state[key] = scheme[key](state[key], action);
@@ -186,6 +195,7 @@ const rootReducer = combineReducers({
 
 const myStore = createStore(
     rootReducer,
+    null,
     applyMiddleware(firstSyncLogger, secondAsyncLogger),
 );
 
