@@ -92,7 +92,6 @@ const INITIAL_STATE = {
 const myStore = createStore(
     microReducerForDeeds,
     INITIAL_STATE,
-    applyMiddleware(logger),
 );
 ```
 
