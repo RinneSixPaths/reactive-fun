@@ -1,6 +1,6 @@
 /*
-    * @param {Object | null | undefined} initialState.
-    * @param {Function[]} reducers.
+    * @param {Function} reducer.
+    * @param {Function} middleware (chain of custom middlewares).
 */
 function createStore(reducer = () => ({}), middleware = () => null) {
     const store = {
@@ -32,7 +32,7 @@ function createStore(reducer = () => ({}), middleware = () => null) {
 }
 
 /*
-    * @param {Object} action to dispatch. Will mutate a state.
+    * @param {Object} action to dispatch.
 */
 
 function dispatch(action) {
